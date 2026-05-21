@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.jsonArray
 import me.timeto.shared.TextFeatures
+import me.timeto.shared.onStopwatchStarted
+import me.timeto.shared.onTimerStarted
 import me.timeto.shared.TimerTimeParser
 import me.timeto.shared.launchExIo
 import me.timeto.shared.backups.Backupable__Holder
@@ -127,6 +129,10 @@ data class TaskDb(
             )
             db.taskQueries.deleteById(id)
         }
+        if (tfTimerType is TextFeatures.TimerType.Timer)
+            onTimerStarted(goalDb.name, tfTimerType.seconds)
+        else if (tfTimerType is TextFeatures.TimerType.Stopwatch)
+            onStopwatchStarted(goalDb.name)
     }
 
     suspend fun startTimer(

@@ -151,6 +151,8 @@ data class IntervalDb(
         ///
 
         suspend fun pauseLastInterval(): Unit = dbIo {
+            var breakActivityName = ""
+            var breakTimerSeconds = 0
             db.transaction {
 
                 val now: Int = time()
@@ -207,11 +209,15 @@ data class IntervalDb(
                     pause = TextFeatures.Pause(pausedTaskId = pausedTaskId),
                     timerType = TextFeatures.TimerType.Timer(seconds = goalDb.pomodoro_timer),
                 )
+                val breakGoalDb = Goal2Db.selectOtherCached()
                 insertWithValidationNeedTransaction(
-                    goalDb = Goal2Db.selectOtherCached(),
+                    goalDb = breakGoalDb,
                     note = pauseIntervalTf.textWithFeatures(),
                 )
+                breakActivityName = breakGoalDb.name
+                breakTimerSeconds = goalDb.pomodoro_timer
             }
+            onTimerStarted(breakActivityName, breakTimerSeconds)
         }
 
         //
@@ -267,6 +273,7 @@ data class IntervalDb(
             timerType = TextFeatures.TimerType.Timer(timer),
         ).textWithFeatures()
         db.intervalQueries.updateNoteById(id = id, note = newNote)
+        onTimerStarted(selectGoalDbCached().name.textFeatures().textNoFeatures, timer)
     }
 
     @Throws(UiException::class, CancellationException::class)
